@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
-import Peer from 'peerjs';
-import './App.css';
+import { useEffect, useRef, useState } from "react";
+import Peer from "peerjs";
+import "./App.css";
+import ScriptTag from "react-script-tag";
 
 function App() {
-  const [peerId, setPeerId] = useState('');
-  const [remotePeerIdValue, setRemotePeerIdValue] = useState('');
+  const [peerId, setPeerId] = useState("");
+  const [remotePeerIdValue, setRemotePeerIdValue] = useState("");
   const remoteVideoRef = useRef(null);
   const currentUserVideoRef = useRef(null);
   const peerInstance = useRef(null);
@@ -12,48 +13,62 @@ function App() {
   useEffect(() => {
     const peer = new Peer();
 
-    peer.on('open', (id) => {
-      setPeerId(id)
+    peer.on("open", (id) => {
+      setPeerId(id);
     });
 
-    peer.on('call', (call) => {
-      var getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+    peer.on("call", (call) => {
+      var getUserMedia =
+        navigator.getUserMedia ||
+        navigator.webkitGetUserMedia ||
+        navigator.mozGetUserMedia;
 
-      getUserMedia({ video: true, audio: true }, (mediaStream) => {
+      getUserMedia({ video: true, audio: false }, (mediaStream) => {
         currentUserVideoRef.current.srcObject = mediaStream;
         currentUserVideoRef.current.play();
-        call.answer(mediaStream)
-        call.on('stream', function(remoteStream) {
-          remoteVideoRef.current.srcObject = remoteStream
+        call.answer(mediaStream);
+        call.on("stream", function (remoteStream) {
+          remoteVideoRef.current.srcObject = remoteStream;
           remoteVideoRef.current.play();
         });
       });
-    })
+    });
 
     peerInstance.current = peer;
-  }, [])
+  }, []);
 
   const call = (remotePeerId) => {
-    var getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+    var getUserMedia =
+      navigator.getUserMedia ||
+      navigator.webkitGetUserMedia ||
+      navigator.mozGetUserMedia;
 
-    getUserMedia({ video: true, audio: true }, (mediaStream) => {
-
+    getUserMedia({ video: true, audio: false }, (mediaStream) => {
       currentUserVideoRef.current.srcObject = mediaStream;
       currentUserVideoRef.current.play();
 
-      const call = peerInstance.current.call(remotePeerId, mediaStream)
+      const call = peerInstance.current.call(remotePeerId, mediaStream);
 
-      call.on('stream', (remoteStream) => {
-        remoteVideoRef.current.srcObject = remoteStream
+      call.on("stream", (remoteStream) => {
+        remoteVideoRef.current.srcObject = remoteStream;
         remoteVideoRef.current.play();
       });
     });
-  }
+  };
 
   return (
     <div className="App">
+      <ScriptTag
+        isHydrating={true}
+        type="text/javascript"
+        src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"
+      />
       <h1>Current user id is {peerId}</h1>
-      <input type="text" value={remotePeerIdValue} onChange={e => setRemotePeerIdValue(e.target.value)} />
+      <input
+        type="text"
+        value={remotePeerIdValue}
+        onChange={(e) => setRemotePeerIdValue(e.target.value)}
+      />
       <button onClick={() => call(remotePeerIdValue)}>Call</button>
       <div>
         <video ref={currentUserVideoRef} />
